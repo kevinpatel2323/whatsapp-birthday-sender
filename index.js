@@ -12,7 +12,7 @@ app.use(express.static('public'));
 const connection = mysql.createConnection({
     host: 'mysql-1b961294-kevinpatelsmsm.i.aivencloud.com',
     user: 'avnadmin',
-    password: process.env.password,
+    password: 'AVNS_TXCNk41R7UU80GqmXJv',
     database: 'defaultdb'
 });
 
