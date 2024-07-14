@@ -77,13 +77,13 @@
             container.innerHTML = '';
 
             users.forEach((user) => {
-                if (user.birthdate === today && !user.wished) {
+                if (user.birthdate == today && !user.wished) {
                     const btn = document.createElement('button');
                     btn.textContent = `Send Birthday Wish to ${user.name}`;
                     btn.onclick = () => {
                         sendHandle(user.mobile, user.gujarati_name);
                         user.wished = true;
-                        renderBirthdayButtons(); // Refresh the buttons
+                        renderBirthdayButtons();
                     };
                     container.appendChild(btn);
                 }
