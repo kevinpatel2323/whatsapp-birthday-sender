@@ -1,10 +1,11 @@
 const express = require('express');
 const mysql = require('mysql2');
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Serve static files from the "public" directory
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // MySQL connection setup
 const connection = mysql.createConnection({
@@ -26,13 +27,17 @@ connection.connect((err) => {
     console.log('Connected to MySQL');
 });
 
-app.get('/', (req, res) => {
+app.get('/users', (req, res) => {
     connection.query('SELECT * FROM users', (error, results) => {
         if (error) {
             return res.status(500).json({ error });
         }
         res.json(results);
     });
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, () => {
