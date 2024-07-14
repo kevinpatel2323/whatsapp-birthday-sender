@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Birthday Sender</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 360px;
+            width: 100%;
+            margin: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        h6 {
+            color: #666;
+            font-weight: normal;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="birthdayButtons"></div>
+    </div>
+    <script>
+        async function fetchUsers() {
+            const response = await fetch('/users');
+            return response.json();
+        }
+
+        function todayDateString() {
+            const today = new Date();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        }
+
+        async function renderBirthdayButtons() {
+            const users = await fetchUsers();
+            const today = todayDateString();
+            const container = document.getElementById('birthdayButtons');
+            container.innerHTML = '';
+
+            users.forEach((user) => {
+                if (user.birthdate === today && !user.wished) {
+                    const btn = document.createElement('button');
+                    btn.textContent = `Send Birthday Wish to ${user.name}`;
+                    btn.onclick = () => {
+                        sendHandle(user.mobile, user.gujarati_name);
+                        user.wished = true;
+                        renderBirthdayButtons(); // Refresh the buttons
+                    };
+                    container.appendChild(btn);
+                }
+            });
+        }
+
+        function sendHandle(num, gujarati_name) {
+            const msg = encodeURIComponent(`જય સ્વામિનારાયણ ${gujarati_name} , તમારા જન્મદિવસ ની તમને ખુબ ખુબ શુભકામના!`);
+            const win = window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+            win.focus();
+        }
+
+        window.onload = renderBirthdayButtons;
+    </script>
+</body>
+</html>
