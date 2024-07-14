@@ -34,6 +34,7 @@ app.get('/users', (req, res) => {
         }
         res.json(results);
     });
+    
 });
 
 app.get('/', (req, res) => {

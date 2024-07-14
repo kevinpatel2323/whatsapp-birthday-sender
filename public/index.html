@@ -77,7 +77,8 @@
             container.innerHTML = '';
 
             users.forEach((user) => {
-                if (user.birthdate == today && !user.wished) {
+                const userBirthdate = new Date(user.birthdate).toISOString().split('T')[0];
+                if (userBirthdate === today && !user.wished) {
                     const btn = document.createElement('button');
                     btn.textContent = `Send Birthday Wish to ${user.name}`;
                     btn.onclick = () => {
