@@ -26,7 +26,7 @@ connection.connect((err) => {
     console.log('Connected to MySQL');
 });
 
-app.get('/users', (req, res) => {
+app.get('/', (req, res) => {
     connection.query('SELECT * FROM users', (error, results) => {
         if (error) {
             return res.status(500).json({ error });
