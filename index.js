@@ -42,7 +42,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/update-birthdates', (req, res) => {
-    const query = "UPDATE users SET birthdate = CURDATE()";
+    const query = "UPDATE users SET birthdate = CURDATE() + INTERVAL 1 DAY";
     connection.query(query, (error, results) => {
         if (error) {
             console.error('Failed to update birthdates:', error);
