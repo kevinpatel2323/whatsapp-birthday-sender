@@ -30,6 +30,7 @@ connection.connect((err) => {
 app.get('/users', (req, res) => {
     connection.query('SELECT * FROM users', (error, results) => {
         if (error) {
+            console.error('Error retrieving users:', error);
             return res.status(500).json({ error });
         }
         res.json(results);
