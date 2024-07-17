@@ -40,6 +40,18 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/update-birthdates', (req, res) => {
+    const query = "UPDATE users SET birthdate = CURDATE()";
+    connection.query(query, (error, results) => {
+        if (error) {
+            console.error('Failed to update birthdates:', error);
+            return res.status(500).json({ error: "Failed to update birthdates" });
+        }
+        res.json({ message: 'Birthdates updated successfully', affectedRows: results.affectedRows });
+    });
+});
+
+
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
