@@ -6,7 +6,7 @@
     <title>WhatsApp Birthday Sender</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f4f4f9;
@@ -19,9 +19,8 @@
         .container {
             max-width: 360px;
             width: 100%;
-            margin: 20px;
             padding: 20px;
-            background-color: #ffffff;
+            background-color: #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             text-align: center;
@@ -30,73 +29,129 @@
             color: #333;
             margin-bottom: 10px;
         }
-        h6 {
-            color: #666;
-            font-weight: normal;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
         button {
             background-color: #4CAF50;
             color: white;
             border: none;
             padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
             font-size: 16px;
-            margin: 4px 2px;
+            margin: 5px 0;
             cursor: pointer;
             border-radius: 4px;
             width: 100%;
+            transition: background-color 0.3s ease;
         }
         button:hover {
             background-color: #45a049;
+        }
+        .loader {
+            margin: 20px auto;
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #4CAF50;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="birthdayButtons"></div>
+        <h3>Birthday Wishes</h3>
+        <div id="birthdayButtons">
+            <div class="loader"></div>
+        </div>
     </div>
     <script>
+        const API_BASE = 'https://cloud.appwrite.io/v1';
+        const COLLECTION_ID = '678ca2ef00051d113c40';
+        const DATABASE_ID = '6784b27b000b7eb6487b';
+        const API_KEY = 'standard_312113c5bf6bdf4882a349a0bf4c6f53c2def224375be495b859399bb49e9eb16fcf2c1bbd80574944d20eecc1065727c578a5f7f7d5a1717d311e17fa660deb36eeea6c3fcadc2c447f980bb9604925144302bdb48efb7d7b8950aa5bbc674485c21452eebbaad85e65f38fde6172f34100bf7bf7749cb32d4fa8b4f7e132bb';
+
+        // Fetch users with birthdays today
         async function fetchUsers() {
-            const response = await fetch('/users');
-            return response.json();
+            try {
+                const today = new Date();
+                const istOffset = 5.5 * 60 * 60 * 1000; // IST Offset in ms
+                const istDate = new Date(today.getTime() + istOffset);
+                const monthDay = `${String(istDate.getMonth() + 1).padStart(2, '0')}-${String(istDate.getDate()).padStart(2, '0')}`;
+
+                const response = await fetch(`${API_BASE}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Appwrite-Project': 'YOUR_PROJECT_ID',
+                        'X-Appwrite-Key': API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        queries: [
+                            `equal("birthday_whished", [false])`
+                        ]
+                    })
+                });
+
+                const { documents } = await response.json();
+                return documents.filter(doc => doc.birth_date.slice(5, 10) === monthDay);
+            } catch (error) {
+                console.error('Failed to fetch users:', error);
+                return [];
+            }
         }
 
-        function todayDateString() {
-            const today = new Date();
-            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        // Mark a user as wished
+        async function updateUser(userId) {
+            try {
+                await fetch(`${API_BASE}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents/${userId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-Appwrite-Project': 'YOUR_PROJECT_ID',
+                        'X-Appwrite-Key': API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ birthday_whished: true })
+                });
+            } catch (error) {
+                console.error('Failed to update user:', error);
+            }
         }
 
+        // Render buttons for birthdays
         async function renderBirthdayButtons() {
-            const users = await fetchUsers();
-            const today = todayDateString();
             const container = document.getElementById('birthdayButtons');
+            container.innerHTML = '<div class="loader"></div>';
+
+            const users = await fetchUsers();
+
             container.innerHTML = '';
 
-            users.forEach((user) => {
-                const userBirthdate = new Date(user.birthdate).toISOString().split('T')[0];
-                if (userBirthdate === today && !user.wished) {
-                    const btn = document.createElement('button');
-                    btn.textContent = `Send Birthday Wish to ${user.name}`;
-                    btn.onclick = () => {
-                        sendHandle(user.mobile, user.gujarati_name);
-                        user.wished = true;
-                        renderBirthdayButtons();
-                    };
-                    container.appendChild(btn);
-                }
+            if (users.length === 0) {
+                container.innerHTML = '<p>No birthdays today!</p>';
+                return;
+            }
+
+            users.forEach(user => {
+                const button = document.createElement('button');
+                button.textContent = `Wish ${user.first_name} ${user.middle_name || ''} ${user.last_name || ''}`;
+                button.onclick = async () => {
+                    sendWhatsAppMessage(user.mobile_no, `${user.first_name} ${user.middle_name || ''} ${user.last_name || ''}`);
+                    await updateUser(user.$id);
+                    await renderBirthdayButtons();
+                };
+                container.appendChild(button);
             });
         }
 
-        function sendHandle(num, gujarati_name) {
-            const msg = encodeURIComponent(`જય સ્વામિનારાયણ ${gujarati_name} , તમારા જન્મદિવસ ની તમને ખુબ ખુબ શુભકામના!`);
-            const win = window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
-            win.focus();
+        // Open WhatsApp with a birthday message
+        function sendWhatsAppMessage(number, name) {
+            const message = encodeURIComponent(`જય સ્વામિનારાયણ ${name}, તમારા જન્મદિવસની શુભકામનાઓ!`);
+            window.open(`https://wa.me/${number}?text=${message}`, '_blank');
         }
 
+        // Initialize
         window.onload = renderBirthdayButtons;
     </script>
 </body>
