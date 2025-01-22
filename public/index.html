@@ -67,91 +67,49 @@
         </div>
     </div>
     <script>
-        const API_BASE = 'https://cloud.appwrite.io/v1';
-        const COLLECTION_ID = '678ca2ef00051d113c40';
-        const DATABASE_ID = '6784b27b000b7eb6487b';
-        const API_KEY = 'standard_312113c5bf6bdf4882a349a0bf4c6f53c2def224375be495b859399bb49e9eb16fcf2c1bbd80574944d20eecc1065727c578a5f7f7d5a1717d311e17fa660deb36eeea6c3fcadc2c447f980bb9604925144302bdb48efb7d7b8950aa5bbc674485c21452eebbaad85e65f38fde6172f34100bf7bf7749cb32d4fa8b4f7e132bb';
-
-        // Fetch users with birthdays today
         async function fetchUsers() {
-            try {
-                const today = new Date();
-                const istOffset = 5.5 * 60 * 60 * 1000; // IST Offset in ms
-                const istDate = new Date(today.getTime() + istOffset);
-                const monthDay = `${String(istDate.getMonth() + 1).padStart(2, '0')}-${String(istDate.getDate()).padStart(2, '0')}`;
-
-                const response = await fetch(`${API_BASE}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Appwrite-Project': 'YOUR_PROJECT_ID',
-                        'X-Appwrite-Key': API_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        queries: [
-                            `equal("birthday_whished", [false])`
-                        ]
-                    })
-                });
-
-                const { documents } = await response.json();
-                return documents.filter(doc => doc.birth_date.slice(5, 10) === monthDay);
-            } catch (error) {
-                console.error('Failed to fetch users:', error);
-                return [];
-            }
+            const response = await fetch('/users');
+            if (!response.ok) throw new Error('Failed to fetch users');
+            return response.json();
         }
 
-        // Mark a user as wished
-        async function updateUser(userId) {
-            try {
-                await fetch(`${API_BASE}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents/${userId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'X-Appwrite-Project': 'YOUR_PROJECT_ID',
-                        'X-Appwrite-Key': API_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ birthday_whished: true })
-                });
-            } catch (error) {
-                console.error('Failed to update user:', error);
-            }
+        async function updateUser(documentId) {
+            const response = await fetch(`/update-users/${documentId}`);
+            if (!response.ok) throw new Error('Failed to update user');
         }
 
-        // Render buttons for birthdays
         async function renderBirthdayButtons() {
-            const container = document.getElementById('birthdayButtons');
-            container.innerHTML = '<div class="loader"></div>';
+            try {
+                const { documents } = await fetchUsers();
+                const container = document.getElementById('birthdayButtons');
+                container.innerHTML = '';
 
-            const users = await fetchUsers();
+                if (documents.length === 0) {
+                    container.innerHTML = '<p>No birthdays today!</p>';
+                    return;
+                }
 
-            container.innerHTML = '';
-
-            if (users.length === 0) {
-                container.innerHTML = '<p>No birthdays today!</p>';
-                return;
+                documents.forEach((user) => {
+                    const btn = document.createElement('button');
+                    btn.textContent = `Wish ${user.first_name} ${user.middle_name || ''} ${user.last_name || ''}`;
+                    btn.onclick = async () => {
+                        sendWhatsAppMessage(user.mobile_no, user.first_name);
+                        await updateUser(user.$id);
+                        await renderBirthdayButtons();
+                    };
+                    container.appendChild(btn);
+                });
+            } catch (err) {
+                console.error(err);
+                document.getElementById('birthdayButtons').innerHTML = '<p>Error loading data</p>';
             }
-
-            users.forEach(user => {
-                const button = document.createElement('button');
-                button.textContent = `Wish ${user.first_name} ${user.middle_name || ''} ${user.last_name || ''}`;
-                button.onclick = async () => {
-                    sendWhatsAppMessage(user.mobile_no, `${user.first_name} ${user.middle_name || ''} ${user.last_name || ''}`);
-                    await updateUser(user.$id);
-                    await renderBirthdayButtons();
-                };
-                container.appendChild(button);
-            });
         }
 
-        // Open WhatsApp with a birthday message
         function sendWhatsAppMessage(number, name) {
             const message = encodeURIComponent(`જય સ્વામિનારાયણ ${name}, તમારા જન્મદિવસની શુભકામનાઓ!`);
             window.open(`https://wa.me/${number}?text=${message}`, '_blank');
         }
 
-        // Initialize
         window.onload = renderBirthdayButtons;
     </script>
 </body>
