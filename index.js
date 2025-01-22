@@ -1,12 +1,9 @@
 const express = require('express');
-const multer = require('multer');
-const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
 const { Client, Databases, Query } = require('node-appwrite');
 
 const app = express();
-const upload = multer({ dest: 'uploads/' });
 
 const client = new Client()
   .setEndpoint(process.env.APPWRITE_ENDPOINT)
@@ -22,53 +19,6 @@ const cleanUpFile = (filePath) => {
     fs.unlinkSync(filePath);
   }
 };
-
-// Endpoint to upload and process the CSV file
-app.post('/upload', upload.single('file'), async (req, res) => {
-  const results = [];
-  const filePath = req.file.path;
-
-  try {
-    // Read and parse CSV
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on('data', (data) => results.push(data))
-      .on('end', async () => {
-        cleanUpFile(filePath); // Cleanup file
-        try {
-          // Bulk upload to Appwrite
-          const createDocuments = results.map((row) =>
-            databases.createDocument(DATABASE_ID, COLLECTION_ID, 'unique()', {
-              first_name: row['First Name'],
-              middle_name: row['Middle Name'],
-              last_name: row['Last Name'],
-              cast: row['Cast'],
-              occupation: row['Occupation'],
-              mobile_no: row['Mobile No'],
-              email: row['Email'],
-              blood_group: row['Blood Group'],
-              birth_date: row['Birth Date'],
-              address: row['Address'],
-              village_area: row['Village /Area'],
-              city_district: row['City / District'],
-              pin_code: row['Pin Code'],
-              native_place: row['Native Place'],
-              sex: row['Sex'].toString(),
-            })
-          );
-          await Promise.all(createDocuments); // Run all promises in parallel
-          res.status(200).send({ message: 'CSV data uploaded successfully!' });
-        } catch (err) {
-          console.error('Error during upload:', err);
-          res.status(500).send({ message: 'Failed to upload data', error: err.message });
-        }
-      });
-  } catch (err) {
-    cleanUpFile(filePath);
-    console.error('File processing error:', err);
-    res.status(500).send({ message: 'Failed to process the file', error: err.message });
-  }
-});
 
 // Endpoint to fetch all users with birthdays today
 app.get('/users', async (req, res) => {
@@ -110,7 +60,7 @@ app.get('/update-users/:id', async (req, res) => {
 });
 
 // Serve static files
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname,'public')));
 
 // Start the server
 const PORT = process.env.PORT || 3000;
