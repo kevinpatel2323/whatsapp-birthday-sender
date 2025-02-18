@@ -29,7 +29,7 @@ const fetchEligibleUsers = async () => {
     let possibleBirthDates = [];
     
     for (let year = currentYear - 100; year <= currentYear; year++) {
-      possibleBirthDates.push(`${year}-${11}-${0o2},00:00:00`);
+      possibleBirthDates.push(`${year}-${istMonth}-${istDay},00:00:00`);
     }
       console.log("🚀 ~ fetchEligibleUsers ~ possibleBirthDates:", possibleBirthDates)
 
