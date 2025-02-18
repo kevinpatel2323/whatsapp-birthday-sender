@@ -23,7 +23,7 @@ const fetchEligibleUsers = async () => {
 
     const istMonth = (istDate.getMonth() + 1).toString().padStart(2, '0');
     const istDay = istDate.getDate().toString().padStart(2, '0');
-    
+
     // Generate possible full YYYY-MM-DD dates (covering past 100 years)
     const currentYear = new Date().getFullYear();
     let possibleBirthDates = [];
@@ -31,9 +31,7 @@ const fetchEligibleUsers = async () => {
     for (let year = currentYear - 100; year <= currentYear; year++) {
       possibleBirthDates.push(`${year}-${istMonth}-${istDay},00:00:00`);
     }
-      console.log("🚀 ~ fetchEligibleUsers ~ possibleBirthDates:", possibleBirthDates)
 
-    console.log(`🔹 Searching for users with birthday: ${istMonth}-${istDay} in multiple years`);
 
     let allDocuments = [];
     let lastDocumentId = null;
@@ -61,7 +59,6 @@ const fetchEligibleUsers = async () => {
       }
     }
 
-    console.log(`✅ Found ${allDocuments.length} eligible users`);
     return allDocuments;
   } catch (err) {
     console.error('❌ Error fetching eligible users:', err);
